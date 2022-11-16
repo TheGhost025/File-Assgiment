@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1668541594 source:c:\users\lenovo\onedrive\desktop\assfile\main.cpp
+	<iostream>
+	<fstream>
+	<cstring>
+
