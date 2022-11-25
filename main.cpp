@@ -4,6 +4,7 @@
 
 using namespace std;
 
+
 class Employee{
 private:
     char Employee_ID[13];
@@ -69,10 +70,10 @@ public:
         RRN=firstDeleted;
         if(RRN==-1){
             stream.seekp(0,ios::end);
-            RRN=stream.tellp()/148;
+            RRN=stream.tellp();
         }
         else{
-            stream.seekg(sizeof(int)+RRN*148,ios::beg);
+            stream.seekg(sizeof(int)+RRN,ios::beg);
             char c;
             stream.get(c);
             if(c!='*'){
@@ -81,7 +82,7 @@ public:
             stream.read((char*)&nextDeleted,sizeof(int));
             stream.seekp(0,ios::beg);
             stream.write((char*)&nextDeleted,sizeof(int));
-            stream.seekp(sizeof(int)+RRN*148,ios::beg);
+            stream.seekp(sizeof(int)+RRN,ios::beg);
         }
         Write(stream);
         return RRN;
@@ -91,16 +92,21 @@ public:
         int nd=-1;
         stream.put(' ');
         stream.write((char*)&nd,sizeof(int));
-        stream.write(Employee_ID,13);
-        stream.write(Dept_ID,30);
-        stream.write(Employee_Name,50);
-        stream.write(Employee_Position,50);
+        stream.write(Employee_ID,strlen(Employee_ID));
+        stream.put('|');
+        stream.write(Dept_ID,strlen(Dept_ID));
+        stream.put('|');
+        stream.write(Employee_Name,strlen(Employee_Name));
+        stream.put('|');
+        stream.write(Employee_Position,strlen(Employee_Position));
+        stream.put('|');
+        stream.put('$');
     }
 
     Employee GetEmployee(int rrn,fstream& stream){
         Employee e;
         e.SetRRN(rrn);
-        stream.seekg(sizeof(int)+rrn*148,ios::beg);
+        stream.seekg(rrn,ios::beg);
         e.read(stream);
         return e;
     }
@@ -114,10 +120,10 @@ public:
             return;
         }
         stream.read((char*)&nextDeleted,sizeof(int));
-        stream.read(Employee_ID,13);
-        stream.read(Dept_ID,30);
-        stream.read(Employee_Name,50);
-        stream.read(Employee_Position,50);
+        stream.getline(Employee_ID,13,'|');
+        stream.getline(Dept_ID,30,'|');
+        stream.getline(Employee_Name,50,'|');
+        stream.getline(Employee_Position,50,'|');
     }
 };
 
@@ -178,10 +184,10 @@ public:
         RRN=firstDeleted;
         if(RRN==-1){
             stream.seekp(0,ios::end);
-            RRN=stream.tellp()/135;
+            RRN=stream.tellp();
         }
         else{
-            stream.seekg(sizeof(int)+RRN*135,ios::beg);
+            stream.seekg(sizeof(int)+RRN,ios::beg);
             char c;
             stream.get(c);
             if(c!='*'){
@@ -190,7 +196,7 @@ public:
             stream.read((char*)&nextDeleted,sizeof(int));
             stream.seekp(0,ios::beg);
             stream.write((char*)&nextDeleted,sizeof(int));
-            stream.seekp(sizeof(int)+RRN*135,ios::beg);
+            stream.seekp(sizeof(int)+RRN,ios::beg);
         }
         Write(stream);
         return RRN;
@@ -200,15 +206,19 @@ public:
         int nd=-1;
         stream.put(' ');
         stream.write((char*)&nd,sizeof(int));
-        stream.write(Dept_ID,30);
-        stream.write(Dept_Name,50);
-        stream.write(Dept_Manger,50);
+        stream.write(Dept_ID,strlen(Dept_ID));
+        stream.put('|');
+        stream.write(Dept_Name,strlen(Dept_Name));
+        stream.put('|');
+        stream.write(Dept_Manger,strlen(Dept_Manger));
+        stream.put('|');
+        stream.put('$');
     }
 
     Department GetDepartment(int rrn,fstream& stream){
         Department d;
         d.SetRRN(rrn);
-        stream.seekg(sizeof(int)+rrn*135,ios::beg);
+        stream.seekg(rrn,ios::beg);
         d.read(stream);
         return d;
     }
@@ -222,9 +232,9 @@ public:
             return;
         }
         stream.read((char*)&nextDeleted,sizeof(int));
-        stream.read(Dept_ID,30);
-        stream.read(Dept_Name,50);
-        stream.read(Dept_Manger,50);
+        stream.getline(Dept_ID,30,'|');
+        stream.getline(Dept_Name,50,'|');
+        stream.getline(Dept_Manger,50,'|');
     }
 };
 
@@ -237,9 +247,8 @@ int main()
 //    int header=-1;
 //    file.write((char*) &header,sizeof(int));
 //    int r=e.WriteEmployee(file);
-//    r++;
 //    cout<<r;
-//
+
 //    Department d;
 //    cin>>d;
 //    fstream file("d.txt",ios::out|ios::in);
@@ -247,17 +256,16 @@ int main()
 //    int header=-1;
 //    file.write((char*) &header,sizeof(int));
 //    int r=d.WriteDeparment(file);
-//    r++;
 //    cout<<r;
 
 //    Employee e;
 //    fstream file("e.txt",ios::out|ios::in);
-//    Employee r=e.GetEmployee(0,file);
+//    Employee r=e.GetEmployee(38,file);
 //    r.Get();
 
 //    Department d;
 //    fstream file("d.txt",ios::out|ios::in);
-//    Department r=d.GetDepartment(0,file);
+//    Department r=d.GetDepartment(32,file);
 //    r.Get();
 
     return 0;
