@@ -125,6 +125,30 @@ public:
         stream.getline(Employee_Name,50,'|');
         stream.getline(Employee_Position,50,'|');
     }
+
+    bool DeleteEmployee(int rrn,fstream& stream){
+        int firstDeleted=-1;
+        int maxbyteoffset=0;
+        char c;
+        stream.seekg(0,ios::end);
+        maxbyteoffset=stream.tellg();
+        if(rrn>=maxbyteoffset){
+            return false;
+        }
+        stream.seekg(0,ios::beg);
+        stream.read((char*)&firstDeleted,sizeof(int));
+        stream.seekg(rrn,ios::beg);
+        stream.get(c);
+        if(c=='*'){
+            return false;
+        }
+        stream.seekp(rrn,ios::beg);
+        stream.put('*');
+        stream.write((char*)&firstDeleted,sizeof(int));
+        stream.seekp(0,ios::beg);
+        stream.write((char*)&rrn,sizeof(int));
+        return true;
+    }
 };
 
 class Department{
@@ -236,6 +260,30 @@ public:
         stream.getline(Dept_Name,50,'|');
         stream.getline(Dept_Manger,50,'|');
     }
+
+    bool DeleteDepartment(int rrn,fstream& stream){
+        int firstDeleted=-1;
+        int maxbyteoffset=0;
+        char c;
+        stream.seekg(0,ios::end);
+        maxbyteoffset=stream.tellg();
+        if(rrn>=maxbyteoffset){
+            return false;
+        }
+        stream.seekg(0,ios::beg);
+        stream.read((char*)&firstDeleted,sizeof(int));
+        stream.seekg(rrn,ios::beg);
+        stream.get(c);
+        if(c=='*'){
+            return false;
+        }
+        stream.seekp(rrn,ios::beg);
+        stream.put('*');
+        stream.write((char*)&firstDeleted,sizeof(int));
+        stream.seekp(0,ios::beg);
+        stream.write((char*)&rrn,sizeof(int));
+        return true;
+    }
 };
 
 int main()
@@ -260,13 +308,21 @@ int main()
 
 //    Employee e;
 //    fstream file("e.txt",ios::out|ios::in);
-//    Employee r=e.GetEmployee(38,file);
+//    Employee r=e.GetEmployee(4,file);
 //    r.Get();
 
 //    Department d;
 //    fstream file("d.txt",ios::out|ios::in);
 //    Department r=d.GetDepartment(32,file);
 //    r.Get();
+
+//    Employee e;
+//    fstream file("e.txt",ios::out|ios::in);
+//    if(e.DeleteEmployee(4,file));
+
+    Department d;
+    fstream file("d.txt",ios::out|ios::in);
+    if(d.DeleteDepartment(4,file));
 
     return 0;
 }
