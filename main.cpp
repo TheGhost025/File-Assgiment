@@ -1,8 +1,84 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <array>
+#include <algorithm>
 
 using namespace std;
+
+struct PIndexEmp{
+    char ID[13];
+    int RRN;
+    bool operator<(const PIndexEmp &e) const {
+		return strcmp(ID, e.ID) < 0;
+	}
+};
+
+struct PIndexDep{
+    char ID[30];
+    int RRN;
+    bool operator<(const PIndexDep &d) const {
+		return strcmp(ID, d.ID) < 0;
+	}
+};
+
+bool compare( PIndexEmp a, PIndexEmp b){
+	if(a.ID < b.ID)
+		return 1;
+	else
+		return 0;
+}
+
+void WritePrimaryIndexEmp(fstream& stream,int r,PIndexEmp e){
+    stream.seekg(0,ios::end);
+    PIndexEmp* emp=new PIndexEmp[r];
+    if(stream.tellg()==0){
+        stream.write((char*)&e,sizeof(e));
+        stream.put('$');
+    }
+    else{
+        stream.seekg(0,ios::beg);
+        PIndexEmp em;
+        int i=0;
+        while(stream.getline((char*)&em,17,'$')){
+            emp[i]=em;
+            i++;
+        }
+        emp[r-1]=e;
+        sort(emp,emp+r,compare);
+        stream.seekp(0,ios::beg);
+        for(int i=0;i<r;i++){
+            stream.write((char*)&emp[i],sizeof(emp[i]));
+            stream.put('$');
+            stream.seekp(0,ios::end);
+        }
+    }
+}
+
+void WritePrimaryIndexDep(fstream& stream,int r,PIndexDep d){
+    stream.seekg(0,ios::end);
+    PIndexDep* dep=new PIndexDep[r];
+    if(stream.tellg()==0){
+        stream.write((char*)&d,sizeof(d));
+        stream.put('$');
+    }
+    else{
+        stream.seekg(0,ios::beg);
+        PIndexDep de;
+        int i=0;
+        while(stream.getline((char*)&de,34,'$')){
+            dep[i]=de;
+            i++;
+        }
+        dep[r-1]=d;
+        sort(dep,dep+r);
+        for(int i=0;i<r;i++){
+            stream.write((char*)&dep[i],sizeof(dep[i]));
+            stream.put('$');
+        }
+    }
+}
+
 
 
 class Employee{
@@ -62,9 +138,10 @@ public:
         return Input;
     }
 
-    int WriteEmployee(fstream& stream){
+    int WriteEmployee(fstream& stream,fstream& p){
         RRN=-1;
         int firstDeleted=-1,nextDeleted=-1;
+        PIndexEmp e;
         stream.seekg(0,ios::beg);
         stream.read((char*)&firstDeleted,sizeof(int));
         RRN=firstDeleted;
@@ -84,7 +161,11 @@ public:
             stream.write((char*)&nextDeleted,sizeof(int));
             stream.seekp(sizeof(int)+RRN,ios::beg);
         }
+        e.RRN=RRN;
+        strcpy(e.ID,Employee_ID);
         Write(stream);
+        int r=numofRecords(stream);
+        WritePrimaryIndexEmp(p,r,e);
         return RRN;
     }
 
@@ -148,6 +229,15 @@ public:
         stream.seekp(0,ios::beg);
         stream.write((char*)&rrn,sizeof(int));
         return true;
+    }
+
+    int numofRecords(fstream& stream){
+        int count=0;
+        char c[156];
+        while(stream.getline(c,156,'$')){
+            count++;
+        }
+        return count;
     }
 };
 
@@ -284,18 +374,28 @@ public:
         stream.write((char*)&rrn,sizeof(int));
         return true;
     }
+
+    int numofRecords(fstream& stream){
+        int count=0;
+        char c[148];
+        while(stream.getline(c,148,'$')){
+            count++;
+        }
+        return count;
+    }
 };
 
 int main()
 {
-//    Employee e;
-//    cin>>e;
-//    fstream file("e.txt",ios::out|ios::in);
+    Employee e;
+    cin>>e;
+    fstream file("e.txt",ios::out|ios::in);
+    fstream file1("ep.txt",ios::out|ios::in);
 //    file.seekp(0,ios::end);
 //    int header=-1;
 //    file.write((char*) &header,sizeof(int));
-//    int r=e.WriteEmployee(file);
-//    cout<<r;
+    int r=e.WriteEmployee(file,file1);
+    cout<<r;
 
 //    Department d;
 //    cin>>d;
@@ -320,9 +420,17 @@ int main()
 //    fstream file("e.txt",ios::out|ios::in);
 //    if(e.DeleteEmployee(4,file));
 
-    Department d;
-    fstream file("d.txt",ios::out|ios::in);
-    if(d.DeleteDepartment(4,file));
+//    Department d;
+//    fstream file("d.txt",ios::out|ios::in);
+//    if(d.DeleteDepartment(4,file));
+
+//    Employee e;
+//    fstream file("e.txt",ios::out|ios::in);
+//    cout<<e.numofRecords(file);
+
+//    Department d;
+//    fstream file("d.txt",ios::out|ios::in);
+//    cout<<d.numofRecords(file);
 
     return 0;
 }
