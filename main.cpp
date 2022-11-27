@@ -33,24 +33,24 @@ void WritePrimaryIndexEmp(fstream& stream,int r,PIndexEmp e){
     stream.seekg(0,ios::end);
     PIndexEmp* emp=new PIndexEmp[r];
     if(stream.tellg()==0){
+        stream.seekp(0,ios::beg);
         stream.write((char*)&e,sizeof(e));
-        stream.put('$');
     }
     else{
         stream.seekg(0,ios::beg);
         PIndexEmp em;
         int i=0;
-        while(stream.getline((char*)&em,17,'$')){
+        while(stream.getline((char*)&em,21,'$')){
+            cout<<em.ID<<endl;
             emp[i]=em;
             i++;
         }
-        emp[r-1]=e;
-        sort(emp,emp+r,compare);
+        emp[i]=e;
+        sort(emp,emp+r);
+        stream.clear();
         stream.seekp(0,ios::beg);
         for(int i=0;i<r;i++){
-            stream.write((char*)&emp[i],sizeof(emp[i]));
-            stream.put('$');
-            stream.seekp(0,ios::end);
+            stream.write((char*)&emp[i],20);
         }
     }
 }
@@ -66,7 +66,7 @@ void WritePrimaryIndexDep(fstream& stream,int r,PIndexDep d){
         stream.seekg(0,ios::beg);
         PIndexDep de;
         int i=0;
-        while(stream.getline((char*)&de,34,'$')){
+        while(stream.getline((char*)&de,38,'$')){
             dep[i]=de;
             i++;
         }
@@ -234,6 +234,7 @@ public:
     int numofRecords(fstream& stream){
         int count=0;
         char c[156];
+        stream.seekg(0,ios::beg);
         while(stream.getline(c,156,'$')){
             count++;
         }
@@ -395,7 +396,7 @@ int main()
 //    int header=-1;
 //    file.write((char*) &header,sizeof(int));
     int r=e.WriteEmployee(file,file1);
-    cout<<r;
+    //cout<<r;
 
 //    Department d;
 //    cin>>d;
