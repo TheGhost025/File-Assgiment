@@ -22,8 +22,15 @@ struct PIndexDep{
 	}
 };
 
-bool compare( PIndexEmp a, PIndexEmp b){
-	if(a.ID < b.ID)
+bool compareE( PIndexEmp a, PIndexEmp b){
+	if(a < b)
+		return 1;
+	else
+		return 0;
+}
+
+bool compareD( PIndexDep a, PIndexDep b){
+	if(a < b)
 		return 1;
 	else
 		return 0;
@@ -33,24 +40,26 @@ void WritePrimaryIndexEmp(fstream& stream,int r,PIndexEmp e){
     stream.seekg(0,ios::end);
     PIndexEmp* emp=new PIndexEmp[r];
     if(stream.tellg()==0){
+        stream.clear();
         stream.seekp(0,ios::beg);
         stream.write((char*)&e,sizeof(e));
+        stream.put('$');
     }
     else{
         stream.seekg(0,ios::beg);
         PIndexEmp em;
         int i=0;
-        while(stream.getline((char*)&em,21,'$')){
-            cout<<em.ID<<endl;
+        while(stream.getline((char*)&em,sizeof(em)+1,'$')){
             emp[i]=em;
             i++;
         }
         emp[i]=e;
-        sort(emp,emp+r);
+        sort(emp,emp+r,compareE);
         stream.clear();
         stream.seekp(0,ios::beg);
-        for(int i=0;i<r;i++){
-            stream.write((char*)&emp[i],20);
+        for(int j=0;j<=i;j++){
+            stream.write((char*)&emp[j],sizeof(emp[j]));
+            stream.put('$');
         }
     }
 }
@@ -59,6 +68,8 @@ void WritePrimaryIndexDep(fstream& stream,int r,PIndexDep d){
     stream.seekg(0,ios::end);
     PIndexDep* dep=new PIndexDep[r];
     if(stream.tellg()==0){
+        stream.clear();
+        stream.seekp(0,ios::beg);
         stream.write((char*)&d,sizeof(d));
         stream.put('$');
     }
@@ -66,14 +77,16 @@ void WritePrimaryIndexDep(fstream& stream,int r,PIndexDep d){
         stream.seekg(0,ios::beg);
         PIndexDep de;
         int i=0;
-        while(stream.getline((char*)&de,38,'$')){
+        while(stream.getline((char*)&de,sizeof(de)+1,'$')){
             dep[i]=de;
             i++;
         }
-        dep[r-1]=d;
-        sort(dep,dep+r);
-        for(int i=0;i<r;i++){
-            stream.write((char*)&dep[i],sizeof(dep[i]));
+        dep[i]=d;
+        sort(dep,dep+r,compareD);
+        stream.clear();
+        stream.seekp(0,ios::beg);
+        for(int j=0;j<=i;j++){
+            stream.write((char*)&dep[j],sizeof(dep[j]));
             stream.put('$');
         }
     }
@@ -138,7 +151,8 @@ public:
         return Input;
     }
 
-    int WriteEmployee(fstream& stream,fstream& p){
+    int WriteEmployee(fstream& stream){
+        fstream file1("ep.txt",ios::out|ios::in);
         RRN=-1;
         int firstDeleted=-1,nextDeleted=-1;
         PIndexEmp e;
@@ -165,7 +179,8 @@ public:
         strcpy(e.ID,Employee_ID);
         Write(stream);
         int r=numofRecords(stream);
-        WritePrimaryIndexEmp(p,r,e);
+        WritePrimaryIndexEmp(file1,r,e);
+        file1.close();
         return RRN;
     }
 
@@ -292,7 +307,9 @@ public:
     }
 
     int WriteDeparment(fstream& stream){
+        fstream file1("dp.txt",ios::out|ios::in);
         RRN=-1;
+        PIndexDep d;
         int firstDeleted=-1,nextDeleted=-1;
         stream.seekg(0,ios::beg);
         stream.read((char*)&firstDeleted,sizeof(int));
@@ -313,7 +330,12 @@ public:
             stream.write((char*)&nextDeleted,sizeof(int));
             stream.seekp(sizeof(int)+RRN,ios::beg);
         }
+        d.RRN=RRN;
+        strcpy(d.ID,Dept_ID);
         Write(stream);
+        int r=numofRecords(stream);
+        WritePrimaryIndexDep(file1,r,d);
+        file1.close();
         return RRN;
     }
 
@@ -379,6 +401,7 @@ public:
     int numofRecords(fstream& stream){
         int count=0;
         char c[148];
+        stream.seekg(0,ios::beg);
         while(stream.getline(c,148,'$')){
             count++;
         }
@@ -388,14 +411,13 @@ public:
 
 int main()
 {
-    Employee e;
-    cin>>e;
-    fstream file("e.txt",ios::out|ios::in);
-    fstream file1("ep.txt",ios::out|ios::in);
+//    Employee e;
+//    cin>>e;
+//    fstream file("e.txt",ios::out|ios::in);
 //    file.seekp(0,ios::end);
 //    int header=-1;
 //    file.write((char*) &header,sizeof(int));
-    int r=e.WriteEmployee(file,file1);
+//    int r=e.WriteEmployee(file);
     //cout<<r;
 
 //    Department d;
