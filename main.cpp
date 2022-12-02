@@ -92,7 +92,29 @@ void WritePrimaryIndexDep(fstream& stream,int r,PIndexDep d){
     }
 }
 
+PIndexEmp* ReadPIndE(fstream& stream,int r){
+    PIndexEmp* emp=new PIndexEmp[r];
+    stream.seekg(0,ios::beg);
+    PIndexEmp em;
+    int i=0;
+    while(stream.getline((char*)&em,sizeof(em)+1,'$')){
+        emp[i]=em;
+        i++;
+    }
+    return emp;
+}
 
+PIndexDep* ReadPIndD(fstream& stream,int r){
+    PIndexDep* dep=new PIndexDep[r];
+    stream.seekg(0,ios::beg);
+    PIndexDep de;
+    int i=0;
+    while(stream.getline((char*)&de,sizeof(de)+1,'$')){
+        dep[i]=de;
+        i++;
+    }
+    return dep;
+}
 
 class Employee{
 private:
@@ -254,6 +276,37 @@ public:
             count++;
         }
         return count;
+    }
+
+    void searchByID(char* ID,fstream& stream){
+        fstream file1("ep.txt",ios::out|ios::in);
+        int r=numofRecords(stream);
+        PIndexEmp* emp;
+        emp=ReadPIndE(file1,r);
+        int rrn=GetRecordByID(emp,ID,r);
+        cout<<rrn<<endl;
+        Employee e=GetEmployee(rrn,stream);
+        e.Get();
+    }
+
+    int GetRecordByID(PIndexEmp* emp,char* ID,int r){
+        int low=0,high=r-1,mid;
+        return Binarysearch(emp,ID,low,high,r);
+    }
+
+    int Binarysearch(PIndexEmp* emp,char* ID,int b,int e,int r){
+            for(int i=0;i<=r;i++){
+                int mid = (b + e) / 2;
+                if(strcmp(ID,emp[mid].ID)==0){
+                    return emp[mid].RRN;
+                    break;
+                    }
+                if (ID < emp[mid].ID)
+                    e = mid - 1;
+                if (ID > emp[mid].ID)
+                    b = mid + 1;
+                }
+            return -1;
     }
 };
 
@@ -418,7 +471,7 @@ int main()
 //    int header=-1;
 //    file.write((char*) &header,sizeof(int));
 //    int r=e.WriteEmployee(file);
-    //cout<<r;
+//    cout<<r;
 
 //    Department d;
 //    cin>>d;
@@ -454,6 +507,12 @@ int main()
 //    Department d;
 //    fstream file("d.txt",ios::out|ios::in);
 //    cout<<d.numofRecords(file);
+
+    Employee e;
+    fstream file("e.txt",ios::out|ios::in);
+    char x[100];
+    cin>>x;
+    e.searchByID(x,file);
 
     return 0;
 }
