@@ -43,23 +43,19 @@ void WritePrimaryIndexEmp(fstream& stream,int r,PIndexEmp e){
         stream.clear();
         stream.seekp(0,ios::beg);
         stream.write((char*)&e,sizeof(e));
-        stream.put('$');
     }
     else{
         stream.seekg(0,ios::beg);
-        PIndexEmp em;
         int i=0;
-        while(stream.getline((char*)&em,sizeof(em)+1,'$')){
-            emp[i]=em;
-            i++;
+        for(i=0;i<r;i++){
+            stream.read((char*)&emp[i],sizeof(emp[i]));
         }
-        emp[i]=e;
+        emp[r-1]=e;
         sort(emp,emp+r,compareE);
         stream.clear();
         stream.seekp(0,ios::beg);
-        for(int j=0;j<=i;j++){
+        for(int j=0;j<r+1;j++){
             stream.write((char*)&emp[j],sizeof(emp[j]));
-            stream.put('$');
         }
     }
 }
@@ -71,23 +67,19 @@ void WritePrimaryIndexDep(fstream& stream,int r,PIndexDep d){
         stream.clear();
         stream.seekp(0,ios::beg);
         stream.write((char*)&d,sizeof(d));
-        stream.put('$');
     }
     else{
         stream.seekg(0,ios::beg);
-        PIndexDep de;
         int i=0;
-        while(stream.getline((char*)&de,sizeof(de)+1,'$')){
-            dep[i]=de;
-            i++;
+        for(i=0;i<r;i++){
+            stream.read((char*)&dep[i],sizeof(dep[i]));
         }
-        dep[i]=d;
+        dep[r-1]=d;
         sort(dep,dep+r,compareD);
         stream.clear();
         stream.seekp(0,ios::beg);
-        for(int j=0;j<=i;j++){
+        for(int j=0;j<r+1;j++){
             stream.write((char*)&dep[j],sizeof(dep[j]));
-            stream.put('$');
         }
     }
 }
@@ -97,9 +89,8 @@ PIndexEmp* ReadPIndE(fstream& stream,int r){
     stream.seekg(0,ios::beg);
     PIndexEmp em;
     int i=0;
-    while(stream.getline((char*)&em,sizeof(em)+1,'$')){
-        emp[i]=em;
-        i++;
+    for(i=0;i<r;i++){
+        stream.read((char*)&emp[i],sizeof(emp[i]));
     }
     return emp;
 }
@@ -109,9 +100,8 @@ PIndexDep* ReadPIndD(fstream& stream,int r){
     stream.seekg(0,ios::beg);
     PIndexDep de;
     int i=0;
-    while(stream.getline((char*)&de,sizeof(de)+1,'$')){
-        dep[i]=de;
-        i++;
+    for(i=0;i<r;i++){
+        stream.read((char*)&dep[i],sizeof(dep[i]));
     }
     return dep;
 }
@@ -222,6 +212,8 @@ public:
     }
 
     Employee GetEmployee(int rrn,fstream& stream){
+        stream.close();
+        stream.open("e.txt",ios::out|ios::in);
         Employee e;
         e.SetRRN(rrn);
         stream.seekg(rrn,ios::beg);
@@ -295,8 +287,9 @@ public:
     }
 
     int Binarysearch(PIndexEmp* emp,char* ID,int b,int e,int r){
+            int mid;
             for(int i=0;i<=r;i++){
-                int mid = (b + e) / 2;
+                mid = (b + e) / 2;
                 if(strcmp(ID,emp[mid].ID)==0){
                     return emp[mid].RRN;
                     break;
@@ -406,6 +399,8 @@ public:
     }
 
     Department GetDepartment(int rrn,fstream& stream){
+        stream.close();
+        stream.open("d.txt",ios::out|ios::in);
         Department d;
         d.SetRRN(rrn);
         stream.seekg(rrn,ios::beg);
@@ -460,6 +455,38 @@ public:
         }
         return count;
     }
+
+    void searchByID(char* ID,fstream& stream){
+        fstream file1("dp.txt",ios::out|ios::in);
+        int r=numofRecords(stream);
+        PIndexDep* dep;
+        dep=ReadPIndD(file1,r);
+        int rrn=GetRecordByID(dep,ID,r);
+        cout<<rrn<<endl;
+        Department d=GetDepartment(rrn,stream);
+        d.Get();
+    }
+
+    int GetRecordByID(PIndexDep* dep,char* ID,int r){
+        int low=0,high=r-1,mid;
+        return Binarysearch(dep,ID,low,high,r);
+    }
+
+    int Binarysearch(PIndexDep* dep,char* ID,int b,int e,int r){
+            int mid;
+            for(int i=0;i<=r;i++){
+                mid = (b + e) / 2;
+                if(strcmp(ID,dep[mid].ID)==0){
+                    return dep[mid].RRN;
+                    break;
+                    }
+                if (ID < dep[mid].ID)
+                    e = mid - 1;
+                if (ID > dep[mid].ID)
+                    b = mid + 1;
+                }
+            return -1;
+    }
 };
 
 int main()
@@ -467,9 +494,9 @@ int main()
 //    Employee e;
 //    cin>>e;
 //    fstream file("e.txt",ios::out|ios::in);
-//    file.seekp(0,ios::end);
-//    int header=-1;
-//    file.write((char*) &header,sizeof(int));
+////    file.seekp(0,ios::end);
+////    int header=-1;
+////    file.write((char*) &header,sizeof(int));
 //    int r=e.WriteEmployee(file);
 //    cout<<r;
 
@@ -508,11 +535,18 @@ int main()
 //    fstream file("d.txt",ios::out|ios::in);
 //    cout<<d.numofRecords(file);
 
-    Employee e;
-    fstream file("e.txt",ios::out|ios::in);
-    char x[100];
-    cin>>x;
-    e.searchByID(x,file);
+//    Employee e;
+//    fstream file("e.txt",ios::out|ios::in);
+//    char x[13];
+//    cin>>x;
+//    e.searchByID(x,file);
+
+//    Department d;
+//    fstream file("d.txt",ios::out|ios::in);
+//    char x[30];
+//    cin>>x;
+//    d.searchByID(x,file);
+
 
     return 0;
 }
