@@ -3,6 +3,7 @@
 #include <cstring>
 #include <array>
 #include <algorithm>
+#include <vector>
 
 using namespace std;
 
@@ -22,19 +23,22 @@ struct PIndexDep{
 	}
 };
 
-bool compareE( PIndexEmp a, PIndexEmp b){
-	if(a < b)
-		return 1;
-	else
-		return 0;
-}
+struct SIndexEmp{
+    char Dept_ID[30];
+    vector<char[13]> ID;
+    bool operator<(const SIndexEmp &e) const {
+		return strcmp(Dept_ID, e.Dept_ID) < 0;
+	}
+};
 
-bool compareD( PIndexDep a, PIndexDep b){
-	if(a < b)
-		return 1;
-	else
-		return 0;
-}
+struct SIndexDep{
+    char Name[30];
+    vector<char[13]> ID;
+    bool operator<(const SIndexDep &d) const {
+		return strcmp(Name, d.Name) < 0;
+	}
+};
+
 
 void WritePrimaryIndexEmp(fstream& stream,int r,PIndexEmp e){
     stream.seekg(0,ios::end);
@@ -106,6 +110,40 @@ PIndexDep* ReadPIndD(fstream& stream,int r){
     return dep;
 }
 
+void WriteSecondaeryIndexEmp(fstream& stream,int r,SIndexEmp e){
+    stream.seekg(0,ios::end);
+    SIndexEmp* emp=new SIndexEmp[r];
+    if(stream.tellg()==0){
+        stream.clear();
+        stream.seekp(0,ios::beg);
+        stream.write((char*)&e,sizeof(e));
+    }
+    else{
+        stream.seekg(0,ios::beg);
+        int i=0;
+        for(i=0;i<r;i++){
+            stream.read((char*)&emp[i],sizeof(emp[i]));
+        }
+        bool state=false
+        for(int j=0;j<i;j++){
+            if(emp[i].Dept_ID==e.Dept_ID){
+                    for(auto char[13] c:e.ID)
+                        emp[i].ID.push_back(c);
+                    state=true;
+            }
+        }
+        if(!state){
+            emp[i]=e;
+        }
+        sort(emp,emp+i,compareE);
+        stream.clear();
+        stream.seekp(0,ios::beg);
+        for(int j=0;j<i;j++){
+            stream.write((char*)&emp[j],sizeof(emp[j]));
+        }
+    }
+}
+
 class Employee{
 private:
     char Employee_ID[13];
@@ -165,9 +203,11 @@ public:
 
     int WriteEmployee(fstream& stream){
         fstream file1("ep.txt",ios::out|ios::in);
+        fstream file2("es.txt",ios::out|ios::in);
         RRN=-1;
         int firstDeleted=-1,nextDeleted=-1;
         PIndexEmp e;
+        SIndexEmp e1;
         stream.seekg(0,ios::beg);
         stream.read((char*)&firstDeleted,sizeof(int));
         RRN=firstDeleted;
@@ -189,10 +229,14 @@ public:
         }
         e.RRN=RRN;
         strcpy(e.ID,Employee_ID);
+        e1.Dept_ID=Dept_ID;
+        e1.ID.push_back(ID);
         Write(stream);
         int r=numofRecords(stream);
         WritePrimaryIndexEmp(file1,r,e);
+        WriteSecondaeryIndexEmp(file2,r,e1);
         file1.close();
+        file2.close();
         return RRN;
     }
 
