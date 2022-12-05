@@ -3,7 +3,8 @@
 #include <cstring>
 #include <array>
 #include <algorithm>
-#include <vector>
+#include <list>
+#include <iterator>
 
 using namespace std;
 
@@ -25,7 +26,7 @@ struct PIndexDep{
 
 struct SIndexEmp{
     char Dept_ID[30];
-    vector<char[13]> ID;
+    list<string> ID;
     bool operator<(const SIndexEmp &e) const {
 		return strcmp(Dept_ID, e.Dept_ID) < 0;
 	}
@@ -33,7 +34,7 @@ struct SIndexEmp{
 
 struct SIndexDep{
     char Name[30];
-    vector<char[13]> ID;
+    vector<string> ID;
     bool operator<(const SIndexDep &d) const {
 		return strcmp(Name, d.Name) < 0;
 	}
@@ -41,24 +42,29 @@ struct SIndexDep{
 
 
 void WritePrimaryIndexEmp(fstream& stream,int r,PIndexEmp e){
+    stream.close();
+    stream.open("ep.txt",ios::out|ios::in);
     stream.seekg(0,ios::end);
-    PIndexEmp* emp=new PIndexEmp[r];
+    PIndexEmp* emp=new PIndexEmp[r+2];
     if(stream.tellg()==0){
         stream.clear();
         stream.seekp(0,ios::beg);
         stream.write((char*)&e,sizeof(e));
     }
     else{
+        int end=stream.tellg();
         stream.seekg(0,ios::beg);
         int i=0;
-        for(i=0;i<r;i++){
+        while(stream.tellg()!=end){
             stream.read((char*)&emp[i],sizeof(emp[i]));
+            i++;
         }
-        emp[r-1]=e;
-        sort(emp,emp+r,compareE);
+        emp[i]=e;
+        i++;
+        sort(emp,emp+i);
         stream.clear();
         stream.seekp(0,ios::beg);
-        for(int j=0;j<r+1;j++){
+        for(int j=0;j<i;j++){
             stream.write((char*)&emp[j],sizeof(emp[j]));
         }
     }
@@ -68,7 +74,6 @@ void WritePrimaryIndexDep(fstream& stream,int r,PIndexDep d){
     stream.seekg(0,ios::end);
     PIndexDep* dep=new PIndexDep[r];
     if(stream.tellg()==0){
-        stream.clear();
         stream.seekp(0,ios::beg);
         stream.write((char*)&d,sizeof(d));
     }
@@ -79,7 +84,7 @@ void WritePrimaryIndexDep(fstream& stream,int r,PIndexDep d){
             stream.read((char*)&dep[i],sizeof(dep[i]));
         }
         dep[r-1]=d;
-        sort(dep,dep+r,compareD);
+        sort(dep,dep+r);
         stream.clear();
         stream.seekp(0,ios::beg);
         for(int j=0;j<r+1;j++){
@@ -112,30 +117,34 @@ PIndexDep* ReadPIndD(fstream& stream,int r){
 
 void WriteSecondaeryIndexEmp(fstream& stream,int r,SIndexEmp e){
     stream.seekg(0,ios::end);
-    SIndexEmp* emp=new SIndexEmp[r];
+    SIndexEmp* emp=new SIndexEmp[r+2];
     if(stream.tellg()==0){
         stream.clear();
         stream.seekp(0,ios::beg);
         stream.write((char*)&e,sizeof(e));
     }
     else{
+        int end=stream.tellg();
         stream.seekg(0,ios::beg);
         int i=0;
-        for(i=0;i<r;i++){
+        while(stream.tellg()!=end){
             stream.read((char*)&emp[i],sizeof(emp[i]));
+            i++;
         }
-        bool state=false
+        bool state;
         for(int j=0;j<i;j++){
-            if(emp[i].Dept_ID==e.Dept_ID){
-                    for(auto char[13] c:e.ID)
-                        emp[i].ID.push_back(c);
+            if(emp[j].Dept_ID==e.Dept_ID){
+                    emp[j].ID.push_back(e.ID.back());
                     state=true;
+                    break;
             }
+            state=false;
         }
         if(!state){
             emp[i]=e;
+            i++;
         }
-        sort(emp,emp+i,compareE);
+        sort(emp,emp+i);
         stream.clear();
         stream.seekp(0,ios::beg);
         for(int j=0;j<i;j++){
@@ -229,14 +238,14 @@ public:
         }
         e.RRN=RRN;
         strcpy(e.ID,Employee_ID);
-        e1.Dept_ID=Dept_ID;
-        e1.ID.push_back(ID);
+        strcpy(e1.Dept_ID,Dept_ID);
+        e1.ID.push_back(Employee_ID);
         Write(stream);
         int r=numofRecords(stream);
         WritePrimaryIndexEmp(file1,r,e);
         WriteSecondaeryIndexEmp(file2,r,e1);
-        file1.close();
         file2.close();
+        file1.close();
         return RRN;
     }
 
@@ -538,9 +547,9 @@ int main()
 //    Employee e;
 //    cin>>e;
 //    fstream file("e.txt",ios::out|ios::in);
-////    file.seekp(0,ios::end);
-////    int header=-1;
-////    file.write((char*) &header,sizeof(int));
+//    file.seekp(0,ios::end);
+//    int header=-1;
+//    file.write((char*) &header,sizeof(int));
 //    int r=e.WriteEmployee(file);
 //    cout<<r;
 
