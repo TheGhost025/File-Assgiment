@@ -26,7 +26,7 @@ struct PIndexDep{
 
 struct SIndexEmp{
     char Dept_ID[30];
-    list<string> ID;
+    int RRN;
     bool operator<(const SIndexEmp &e) const {
         return strcmp(Dept_ID, e.Dept_ID) < 0;
 			}
@@ -34,12 +34,25 @@ struct SIndexEmp{
 
 struct SIndexDep{
     char Name[30];
-    list<string> ID;
+    int RRN;
     bool operator<(const SIndexDep &d) const {
 		return strcmp(Name, d.Name) < 0;
 	}
 };
 
+struct LEmp{
+    int RRN;
+    char ID[13];
+    int next;
+    int back1;
+};
+
+struct LDep{
+    int RRN;
+    char ID[30];
+    int next;
+    int back1;
+};
 
 void WritePrimaryIndexEmp(fstream& stream,int r,PIndexEmp e){
     stream.close();
@@ -98,10 +111,12 @@ void WritePrimaryIndexDep(fstream& stream,int r,PIndexDep d){
 
 PIndexEmp* ReadPIndE(fstream& stream,int r){
     PIndexEmp* emp=new PIndexEmp[r];
+    stream.seekg(0,ios::end);
+    int end=stream.tellg();
     stream.seekg(0,ios::beg);
     PIndexEmp em;
     int i=0;
-    for(i=0;i<r;i++){
+    while(stream.tellg()!=end){
         stream.read((char*)&emp[i],sizeof(emp[i]));
     }
     return emp;
@@ -109,38 +124,85 @@ PIndexEmp* ReadPIndE(fstream& stream,int r){
 
 PIndexDep* ReadPIndD(fstream& stream,int r){
     PIndexDep* dep=new PIndexDep[r];
+    stream.seekg(0,ios::end);
+    int end=stream.tellg();
     stream.seekg(0,ios::beg);
     PIndexDep de;
     int i=0;
-    for(i=0;i<r;i++){
+    while(stream.tellg()!=end){
         stream.read((char*)&dep[i],sizeof(dep[i]));
     }
     return dep;
 }
 
-void WriteSecondaeryIndexEmp(fstream& stream,int r,SIndexEmp e){
+void WriteSecondaeryIndexEmp(fstream& stream,int r,SIndexEmp e,char* ID){
     stream.close();
     stream.open("es.txt",ios::out|ios::in);
+    fstream file1("el.txt",ios::out|ios::in);
     stream.seekg(0,ios::end);
     SIndexEmp* emp=new SIndexEmp[r+1];
     if(stream.tellg()==0){
         stream.clear();
         stream.seekp(0,ios::beg);
+        e.RRN=file1.tellg();
         stream.write((char*)&e,sizeof(e));
+        LEmp le;
+        le.RRN=e.RRN;
+        strcpy(le.ID,ID);
+        le.next=-1;
+        le.back1=-1;
+        file1.write((char*)&le,sizeof(le));
     }
     else{
         int end=stream.tellg();
         stream.seekg(0,ios::beg);
         int i=0;
+        LEmp le;
         while(stream.tellg()!=end){
             stream.read((char*)&emp[i],sizeof(emp[i]));
             i++;
         }
         bool state;
         for(int j=0;j<i;j++){
-            if(strcmp(emp[j].Dept_ID,e.Dept_ID)==0){
-                    emp[j].ID.push_back(e.ID.front());
-                    emp[j].ID.sort();
+            if(strcmp(emp[j].Dept_ID,ID)==0){
+                    file1.seekg(emp[j].RRN,ios::beg);
+                    file1.read((char*)&le,sizeof(le));
+                    if(strcmp(ID,le.ID)<0){
+                            LEmp LE;
+                            LE.next=emp[j].RRN;
+                            file1.seekp(0,ios::end);
+                            le.back1=file1.tellp();
+                            emp[j].RRN=file1.tellp();
+                            file1.seekp(le.RRN,ios::beg);
+                            file1.write((char*)&le,sizeof(le));
+                            strcpy(LE.ID,ID);
+                            LE.back1=-1;
+                            file1.seekp(0,ios::end);
+                            file1.write((char*)&LE,sizeof(LE));
+                    }
+                    else if(strcmp(ID,le.ID)>0){
+                        do{
+                            file1.seekg(le.next,ios::beg);
+                        }
+                        while(strcmp(ID,le.ID)>0);
+                        LEmp LE;
+                        LEmp Le;
+                        int back=le.back1;
+                        file1.seekg(Le.back1,ios::beg);
+                        file1.read((char*)&Le,sizeof(Le));
+                        int current=Le.next;
+                        strcpy(LE.ID,ID);
+                        LE.next=current;
+                        LE.back1=back;
+                        file1.seekp(0,ios::end);
+                        le.back1=file1.tellp();
+                        Le.next=file1.tellp();
+                        file1.write((char*)&LE,sizeof(LE));
+                        file1.seekp(current,ios::beg);
+                        file1.write((char*)&le,sizeof(le));
+                        file1.seekp(back,ios::beg);
+                        file1.write((char*)&Le,sizeof(Le));
+                    }
                     state=true;
                     break;
             }
@@ -150,39 +212,92 @@ void WriteSecondaeryIndexEmp(fstream& stream,int r,SIndexEmp e){
             emp[i]=e;
             i++;
             sort(emp,emp+i);
+            file1.seekp(0,ios::end);
+            LEmp LE;
+            strcpy(LE.ID,ID);
+            LE.next=-1;
+            LE.back1=-1;
+            emp[i].RRN=file1.tellp();
+            file1.write((char*)&LE,sizeof(LE));
         }
         stream.clear();
         stream.seekp(0,ios::beg);
         for(int j=0;j<i;j++){
-            cout<<1<<endl;
             stream.write((char*)&emp[j],sizeof(emp[j]));
         }
+        file1.close();
     }
 }
 
-void WriteSecondaeryIndexDep(fstream& stream,int r,SIndexDep d){
+void WriteSecondaeryIndexDep(fstream& stream,int r,SIndexDep d,char* ID){
     stream.close();
     stream.open("ds.txt",ios::out|ios::in);
+    fstream file1("dl.txt",ios::out|ios::in);
     stream.seekg(0,ios::end);
     SIndexDep* dep=new SIndexDep[r+1];
     if(stream.tellg()==0){
         stream.clear();
         stream.seekp(0,ios::beg);
+        d.RRN=file1.tellp();
         stream.write((char*)&d,sizeof(d));
+        LDep ld;
+        ld.RRN=d.RRN;
+        strcpy(ld.ID,ID);
+        ld.next=-1;
+        ld.back1=-1;
+        file1.write((char*)&ld,sizeof(ld));
+
     }
     else{
         int end=stream.tellg();
         stream.seekg(0,ios::beg);
         int i=0;
+        LDep ld;
         while(stream.tellg()!=end){
             stream.read((char*)&dep[i],sizeof(dep[i]));
             i++;
         }
         bool state;
         for(int j=0;j<i;j++){
-            if(dep[j].Name==d.Name){
-                    dep[j].ID.push_back(d.ID.back());
-                    dep[j].ID.sort();
+            if(strcmp(dep[j].Name,ID)==0){
+                    file1.seekg(dep[j].RRN,ios::beg);
+                    file1.read((char*)&ld,sizeof(ld));
+                    if(strcmp(ID,ld.ID)<0){
+                            LDep LD;
+                            LD.next=dep[j].RRN;
+                            file1.seekp(0,ios::end);
+                            ld.back1=file1.tellp();
+                            dep[j].RRN=file1.tellp();
+                            file1.seekp(ld.RRN,ios::beg);
+                            file1.write((char*)&ld,sizeof(ld));
+                            strcpy(LD.ID,ID);
+                            LD.back1=-1;
+                            file1.seekp(0,ios::end);
+                            file1.write((char*)&LD,sizeof(LD));
+                    }
+                    else if(strcmp(ID,ld.ID)>0){
+                        do{
+                            file1.seekg(ld.next,ios::beg);
+                        }
+                        while(strcmp(ID,ld.ID)>0);
+                        LDep LD;
+                        LDep Ld;
+                        int back=ld.back1;
+                        file1.seekg(Ld.back1,ios::beg);
+                        file1.read((char*)&Ld,sizeof(Ld));
+                        int current=Ld.next;
+                        strcpy(LD.ID,ID);
+                        LD.next=current;
+                        LD.back1=back;
+                        file1.seekp(0,ios::end);
+                        ld.back1=file1.tellp();
+                        Ld.next=file1.tellp();
+                        file1.write((char*)&LD,sizeof(LD));
+                        file1.seekp(current,ios::beg);
+                        file1.write((char*)&ld,sizeof(ld));
+                        file1.seekp(back,ios::beg);
+                        file1.write((char*)&Ld,sizeof(Ld));
+                    }
                     state=true;
                     break;
             }
@@ -191,14 +306,45 @@ void WriteSecondaeryIndexDep(fstream& stream,int r,SIndexDep d){
         if(!state){
             dep[i]=d;
             i++;
+            sort(dep,dep+i);
+            file1.seekp(0,ios::end);
+            LDep LD;
+            strcpy(LD.ID,ID);
+            LD.next=-1;
+            LD.back1=-1;
+            dep[i].RRN=file1.tellp();
+            file1.write((char*)&LD,sizeof(LD));
         }
-        sort(dep,dep+i);
         stream.clear();
         stream.seekp(0,ios::beg);
         for(int j=0;j<i;j++){
+            cout<<1<<endl;
             stream.write((char*)&dep[j],sizeof(dep[j]));
         }
+        file1.close();
     }
+}
+
+SIndexEmp* ReadSIndE(fstream& stream,int r){
+    SIndexEmp* emp=new SIndexEmp[r];
+    stream.seekg(0,ios::beg);
+    SIndexEmp em;
+    int i=0;
+    for(i=0;i<r;i++){
+        stream.read((char*)&emp[i],sizeof(emp[i]));
+    }
+    return emp;
+}
+
+SIndexDep* ReadSIndD(fstream& stream,int r){
+    SIndexDep* dep=new SIndexDep[r];
+    stream.seekg(0,ios::beg);
+    SIndexDep de;
+    int i=0;
+    for(i=0;i<r;i++){
+        stream.read((char*)&dep[i],sizeof(dep[i]));
+    }
+    return dep;
 }
 
 class Employee{
@@ -259,6 +405,8 @@ public:
     }
 
     int WriteEmployee(fstream& stream){
+        fstream file1("ep.txt",ios::out|ios::in);
+        fstream file2("es.txt",ios::out|ios::in);
         RRN=-1;
         int firstDeleted=-1,nextDeleted=-1;
         PIndexEmp e;
@@ -285,15 +433,12 @@ public:
         e.RRN=RRN;
         strcpy(e.ID,Employee_ID);
         strcpy(e1.Dept_ID,Dept_ID);
-        e1.ID.push_back(Employee_ID);
         Write(stream);
         int r=numofRecords(stream);
-        fstream file1("ep.txt",ios::out|ios::in);
         WritePrimaryIndexEmp(file1,r,e);
-        fstream file2("es.txt",ios::out|ios::in);
-        WriteSecondaeryIndexEmp(file2,r,e1);
-        file2.close();
+        WriteSecondaeryIndexEmp(file2,r,e1,Employee_ID);
         file1.close();
+        file2.close();
         return RRN;
     }
 
@@ -362,6 +507,8 @@ public:
     }
 
     int numofRecords(fstream& stream){
+        stream.close();
+        stream.open("e.txt",ios::out|ios::in);
         int count=0;
         char c[156];
         stream.seekg(0,ios::beg);
@@ -389,15 +536,52 @@ public:
 
     int Binarysearch(PIndexEmp* emp,char* ID,int b,int e,int r){
             int mid;
-            for(int i=0;i<=r;i++){
+            while(b<=e){
                 mid = (b + e) / 2;
                 if(strcmp(ID,emp[mid].ID)==0){
                     return emp[mid].RRN;
+                    }
+                else if (strcmp(ID , emp[mid].ID)<0)
+                    e = mid - 1;
+                else if (strcmp(ID , emp[mid].ID)>0)
+                    b = mid + 1;
+                }
+            return -1;
+    }
+
+    void searchByDeptId(char* ID,fstream& stream){
+        fstream file1("es.txt",ios::out|ios::in);
+        fstream file2("el.txt",ios::out|ios::in);
+        int r=numofRecords(stream);
+        SIndexEmp* emp;
+        emp=ReadSIndE(file1,r);
+        int rrn=GetRecordsByDeptID(emp,ID,r);
+        LEmp l;
+        file2.seekg(rrn,ios::beg);
+        do{
+            file2.read((char*)&l,sizeof(l));
+            searchByID(l.ID,stream);
+            file2.seekg(l.next,ios::beg);
+        }
+        while(l.next!=-1);
+    }
+
+    int GetRecordsByDeptID(SIndexEmp* emp,char* ID,int r){
+        int low=0,high=r-1,mid;
+        return BinarysearchD(emp,ID,low,high,r);
+    }
+
+    int BinarysearchD(SIndexEmp* emp,char* ID,int b,int e,int r){
+            int mid;
+            while(b<=e){
+                mid = (b + e) / 2;
+                if(strcmp(ID,emp[mid].Dept_ID)==0){
+                    return emp[mid].RRN;
                     break;
                     }
-                if (ID < emp[mid].ID)
+                if (strcmp(ID , emp[mid].Dept_ID)<0)
                     e = mid - 1;
-                if (ID > emp[mid].ID)
+                if (strcmp(ID , emp[mid].Dept_ID)>0)
                     b = mid + 1;
                 }
             return -1;
@@ -482,11 +666,10 @@ public:
         d.RRN=RRN;
         strcpy(d.ID,Dept_ID);
         strcpy(d1.Name,Dept_Name);
-        d1.ID.push_back(Dept_ID);
         Write(stream);
         int r=numofRecords(stream);
         WritePrimaryIndexDep(file1,r,d);
-        WriteSecondaeryIndexDep(file2,r,d1);
+        WriteSecondaeryIndexDep(file2,r,d1,Dept_ID);
         file1.close();
         file2.close();
         return RRN;
@@ -554,6 +737,8 @@ public:
     }
 
     int numofRecords(fstream& stream){
+        stream.close();
+        stream.open("d.txt",ios::out|ios::in);
         int count=0;
         char c[148];
         stream.seekg(0,ios::beg);
@@ -581,7 +766,7 @@ public:
 
     int Binarysearch(PIndexDep* dep,char* ID,int b,int e,int r){
             int mid;
-            for(int i=0;i<=r;i++){
+            while(b<=e){
                 mid = (b + e) / 2;
                 if(strcmp(ID,dep[mid].ID)==0){
                     return dep[mid].RRN;
@@ -594,6 +779,44 @@ public:
                 }
             return -1;
     }
+
+    void searchByDeptId(char* ID,fstream& stream){
+        fstream file1("ds.txt",ios::out|ios::in);
+        fstream file2("dl.txt",ios::out|ios::in);
+        int r=numofRecords(stream);
+        SIndexDep* dep;
+        dep=ReadSIndD(file1,r);
+        int rrn=GetRecordsByName(dep,ID,r);
+        LDep d;
+        file2.seekg(rrn,ios::beg);
+        do{
+            file2.read((char*)&d,sizeof(d));
+            searchByID(d.ID,stream);
+            file2.seekg(d.next,ios::beg);
+        }
+        while(d.next!=-1);
+    }
+
+    int GetRecordsByName(SIndexDep* dep,char* Name,int r){
+        int low=0,high=r-1,mid;
+        return BinarysearchN(dep,Name,low,high,r);
+    }
+
+    int BinarysearchN(SIndexDep* dep,char* Name,int b,int e,int r){
+            int mid;
+            while(b<=e){
+                mid = (b + e) / 2;
+                if(strcmp(Name,dep[mid].Name)==0){
+                    return dep[mid].RRN;
+                    break;
+                    }
+                if (strcmp(Name , dep[mid].Name)<0)
+                    e = mid - 1;
+                if (strcmp(Name , dep[mid].Name)>0)
+                    b = mid + 1;
+                }
+            return -1;
+    }
 };
 
 int main()
@@ -601,12 +824,11 @@ int main()
     Employee e;
     cin>>e;
     fstream file("e.txt",ios::out|ios::in);
-//    file.seekp(0,ios::end);
-//    int header=-1;
-//    file.write((char*) &header,sizeof(int));
+    file.seekp(0,ios::end);
+    int header=-1;
+    file.write((char*) &header,sizeof(int));
     int r=e.WriteEmployee(file);
-    cout<<r;
-
+    cout<<r<<endl;
 
 //    Department d;
 //    cin>>d;
@@ -654,6 +876,12 @@ int main()
 //    char x[30];
 //    cin>>x;
 //    d.searchByID(x,file);
+
+    Employee e1;
+//    fstream file("e.txt",ios::out|ios::in);
+    char x[13];
+    cin>>x;
+    e1.searchByDeptId(x,file);
 
 
     return 0;
