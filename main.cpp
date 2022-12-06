@@ -506,6 +506,15 @@ public:
         return true;
     }
 
+    void DeleteEmployeeByID(char* ID,fstream& stream){
+        fstream file("ep.txt",ios::in|ios::out);
+        PIndexEmp* emp;
+        int r=numofRecords(stream);
+        emp=ReadPIndE(file,r);
+        int rrn=Binarysearch(emp,ID,0,r-1,r);
+        DeleteEmployee(rrn,stream);
+    }
+
     int numofRecords(fstream& stream){
         stream.close();
         stream.open("e.txt",ios::out|ios::in);
@@ -736,6 +745,15 @@ public:
         return true;
     }
 
+    void DeleteDepartmentByID(char* ID,fstream& stream){
+        fstream file("dp.txt",ios::in|ios::out);
+        PIndexDep* dep;
+        int r=numofRecords(stream);
+        dep=ReadPIndD(file,r);
+        int rrn=Binarysearch(dep,ID,0,r-1,r);
+        DeleteDepartment(rrn,stream);
+    }
+
     int numofRecords(fstream& stream){
         stream.close();
         stream.open("d.txt",ios::out|ios::in);
@@ -821,68 +839,105 @@ public:
 
 int main()
 {
-    Employee e;
-    cin>>e;
-    fstream file("e.txt",ios::out|ios::in);
-    file.seekp(0,ios::end);
-    int header=-1;
-    file.write((char*) &header,sizeof(int));
-    int r=e.WriteEmployee(file);
-    cout<<r<<endl;
-
-//    Department d;
-//    cin>>d;
-//    fstream file("d.txt",ios::out|ios::in);
-//    file.seekp(0,ios::end);
-//    int header=-1;
-//    file.write((char*) &header,sizeof(int));
-//    int r=d.WriteDeparment(file);
-//    cout<<r;
-
-//    Employee e;
-//    fstream file("e.txt",ios::out|ios::in);
-//    Employee r=e.GetEmployee(4,file);
-//    r.Get();
-
-//    Department d;
-//    fstream file("d.txt",ios::out|ios::in);
-//    Department r=d.GetDepartment(32,file);
-//    r.Get();
-
-//    Employee e;
-//    fstream file("e.txt",ios::out|ios::in);
-//    if(e.DeleteEmployee(4,file));
-
-//    Department d;
-//    fstream file("d.txt",ios::out|ios::in);
-//    if(d.DeleteDepartment(4,file));
-
-//    Employee e;
-//    fstream file("e.txt",ios::out|ios::in);
-//    cout<<e.numofRecords(file);
-
-//    Department d;
-//    fstream file("d.txt",ios::out|ios::in);
-//    cout<<d.numofRecords(file);
-
-//    Employee e;
-//    fstream file("e.txt",ios::out|ios::in);
-//    char x[13];
-//    cin>>x;
-//    e.searchByID(x,file);
-
-//    Department d;
-//    fstream file("d.txt",ios::out|ios::in);
-//    char x[30];
-//    cin>>x;
-//    d.searchByID(x,file);
-
-    Employee e1;
-//    fstream file("e.txt",ios::out|ios::in);
-    char x[13];
-    cin>>x;
-    e1.searchByDeptId(x,file);
-
-
+    bool state=true;
+    int x;
+    while(state){
+            cout<<"1 Insert New Emplyee"<<endl;
+            cout<<"2 Insert New Department"<<endl;
+            cout<<"3 Delete Emplyee(ID)"<<endl;
+            cout<<"4 Delete Department(ID)"<<endl;
+            cout<<"5 print Emplyee(ID)"<<endl;
+            cout<<"6 print Emplyee(dept_ID)"<<endl;
+            cout<<"7 print Department(ID)"<<endl;
+            cout<<"8 print Department(Name)"<<endl;
+            cout<<"9 Exit"<<endl;
+            cin>>x;
+    switch(x){
+        case 1:{
+                fstream file("e.txt",ios::in|ios::out);
+                Employee e;
+                cin>>e;
+                file.seekp(0,ios::beg);
+                if(file.tellp()==0){
+                    int header=-1;
+                    file.write((char*)& header,sizeof(int));
+                }
+                e.WriteEmployee(file);
+                file.close();
+                break;
+        }
+        case 2:{
+            fstream file("d.txt",ios::in|ios::out);
+            Department d;
+            cin>>d;
+            file.seekp(0,ios::beg);
+            if(file.tellp()==0){
+                int header=-1;
+                file.write((char*)& header,sizeof(int));
+            }
+            d.WriteDeparment(file);
+            file.close();
+            break;
+        }
+        case 3:{
+                fstream file("e.txt",ios::in|ios::out);
+                Employee e;
+                char* c;
+                cin>>c;
+                e.DeleteEmployeeByID(c,file);
+                file.close();
+                break;
+        }
+        case 4:{
+                fstream file("d.txt",ios::in|ios::out);
+                Department d;
+                char* c;
+                cin>>c;
+                d.DeleteDepartmentByID(c,file);
+                file.close();
+                break;
+        }
+        case 5:{
+                fstream file("e.txt",ios::in|ios::out);
+                Employee e;
+                char c[13];
+                cin>>c;
+                e.searchByID(c,file);
+                file.close();
+                break;
+        }
+        case 6:{
+                fstream file("e.txt",ios::in|ios::out);
+                Employee e;
+                char c[30];
+                cin>>c;
+                e.searchByDeptId(c,file);
+                file.close();
+                break;
+        }
+        case 7:{
+                fstream file("d.txt",ios::in|ios::out);
+                Department d;
+                char c[30];
+                cin>>c;
+                d.searchByID(c,file);
+                file.close();
+                break;
+        }
+        case 8:{
+                fstream file("d.txt",ios::in|ios::out);
+                Department d;
+                char c[30];
+                cin>>c;
+                d.searchByDeptId(c,file);
+                file.close();
+                break;
+        }
+        case 9:{
+            state=false;
+            break;
+        }
+    }
+    }
     return 0;
 }
