@@ -61,10 +61,10 @@ PIndexEmp* ReadPIndE(fstream& stream,int r){
     stream.seekg(0,ios::end);
     int end=stream.tellg();
     stream.seekg(0,ios::beg);
-    PIndexEmp em;
     int i=0;
     while(stream.tellg()!=end){
         stream.read((char*)&emp[i],sizeof(emp[i]));
+        i++;
     }
     return emp;
 }
@@ -74,10 +74,10 @@ PIndexDep* ReadPIndD(fstream& stream,int r){
     stream.seekg(0,ios::end);
     int end=stream.tellg();
     stream.seekg(0,ios::beg);
-    PIndexDep de;
     int i=0;
     while(stream.tellg()!=end){
         stream.read((char*)&dep[i],sizeof(dep[i]));
+        i++;
     }
     return dep;
 }
@@ -539,8 +539,6 @@ public:
     void searchByID(char* ID,fstream& stream){
         fstream file1("ep.txt",ios::out|ios::in);
         int r=numofRecords(stream);
-        stream.close();
-        stream.open("e.txt",ios::out|ios::in);
         PIndexEmp* emp;
         emp=ReadPIndE(file1,r);
         int rrn=GetRecordByID(emp,ID,r);
