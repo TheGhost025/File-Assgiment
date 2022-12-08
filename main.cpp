@@ -550,8 +550,6 @@ public:
     void searchByIDName(char* ID,fstream& stream){
         fstream file1("ep.txt",ios::out|ios::in);
         int r=numofRecords(stream);
-        stream.close();
-        stream.open("e.txt",ios::out|ios::in);
         PIndexEmp* emp;
         emp=ReadPIndE(file1,r);
         int rrn=GetRecordByID(emp,ID,r);
@@ -799,8 +797,6 @@ public:
     void searchByID(char* ID,fstream& stream){
         fstream file1("dp.txt",ios::out|ios::in);
         int r=numofRecords(stream);
-        stream.close();
-        stream.open("d.txt",ios::out|ios::in);
         PIndexDep* dep;
         dep=ReadPIndD(file1,r);
         int rrn=GetRecordByID(dep,ID,r);
@@ -822,9 +818,9 @@ public:
                     return dep[mid].RRN;
                     break;
                     }
-                if (ID < dep[mid].ID)
+                if (strcmp(ID , dep[mid].ID)<0)
                     e = mid - 1;
-                if (ID > dep[mid].ID)
+                if (strcmp(ID , dep[mid].ID)>0)
                     b = mid + 1;
                 }
             return -1;
