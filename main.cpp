@@ -212,8 +212,6 @@ void WriteSecondaeryIndexEmp(fstream& stream,int r,SIndexEmp e,char* ID){
         }
         if(!state){
             emp[i]=e;
-            i++;
-            sort(emp,emp+i);
             LEmp LE;
             strcpy(LE.ID,ID);
             LE.next=-1;
@@ -221,6 +219,8 @@ void WriteSecondaeryIndexEmp(fstream& stream,int r,SIndexEmp e,char* ID){
             file1.seekp(0,ios::end);
             emp[i].RRN=file1.tellp();
             file1.write((char*)&LE,sizeof(LE));
+            i++;
+            sort(emp,emp+i);
         }
         stream.clear();
         stream.seekp(0,ios::beg);
@@ -307,8 +307,6 @@ void WriteSecondaeryIndexDep(fstream& stream,int r,SIndexDep d,char* ID){
         }
         if(!state){
             dep[i]=d;
-            i++;
-            sort(dep,dep+i);
             file1.seekp(0,ios::end);
             LDep LD;
             strcpy(LD.ID,ID);
@@ -317,6 +315,8 @@ void WriteSecondaeryIndexDep(fstream& stream,int r,SIndexDep d,char* ID){
             dep[i].RRN=file1.tellp();
             file1.seekp(0,ios::end);
             file1.write((char*)&LD,sizeof(LD));
+            i++;
+            sort(dep,dep+i);
         }
         stream.clear();
         stream.seekp(0,ios::beg);
