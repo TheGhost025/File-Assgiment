@@ -56,6 +56,32 @@ struct LDep{
     int back1;
 };
 
+PIndexEmp* ReadPIndE(fstream& stream,int r){
+    PIndexEmp* emp=new PIndexEmp[r];
+    stream.seekg(0,ios::end);
+    int end=stream.tellg();
+    stream.seekg(0,ios::beg);
+    PIndexEmp em;
+    int i=0;
+    while(stream.tellg()!=end){
+        stream.read((char*)&emp[i],sizeof(emp[i]));
+    }
+    return emp;
+}
+
+PIndexDep* ReadPIndD(fstream& stream,int r){
+    PIndexDep* dep=new PIndexDep[r];
+    stream.seekg(0,ios::end);
+    int end=stream.tellg();
+    stream.seekg(0,ios::beg);
+    PIndexDep de;
+    int i=0;
+    while(stream.tellg()!=end){
+        stream.read((char*)&dep[i],sizeof(dep[i]));
+    }
+    return dep;
+}
+
 void WritePrimaryIndexEmp(fstream& stream,int r,PIndexEmp e){
     stream.close();
     stream.open("ep.txt",ios::out|ios::in);
@@ -109,32 +135,6 @@ void WritePrimaryIndexDep(fstream& stream,int r,PIndexDep d){
             stream.write((char*)&dep[j],sizeof(dep[j]));
         }
     }
-}
-
-PIndexEmp* ReadPIndE(fstream& stream,int r){
-    PIndexEmp* emp=new PIndexEmp[r];
-    stream.seekg(0,ios::end);
-    int end=stream.tellg();
-    stream.seekg(0,ios::beg);
-    PIndexEmp em;
-    int i=0;
-    while(stream.tellg()!=end){
-        stream.read((char*)&emp[i],sizeof(emp[i]));
-    }
-    return emp;
-}
-
-PIndexDep* ReadPIndD(fstream& stream,int r){
-    PIndexDep* dep=new PIndexDep[r];
-    stream.seekg(0,ios::end);
-    int end=stream.tellg();
-    stream.seekg(0,ios::beg);
-    PIndexDep de;
-    int i=0;
-    while(stream.tellg()!=end){
-        stream.read((char*)&dep[i],sizeof(dep[i]));
-    }
-    return dep;
 }
 
 void WriteSecondaeryIndexEmp(fstream& stream,int r,SIndexEmp e,char* ID){
@@ -214,11 +214,11 @@ void WriteSecondaeryIndexEmp(fstream& stream,int r,SIndexEmp e,char* ID){
             emp[i]=e;
             i++;
             sort(emp,emp+i);
-            file1.seekp(0,ios::end);
             LEmp LE;
             strcpy(LE.ID,ID);
             LE.next=-1;
             LE.back1=-1;
+            file1.seekp(0,ios::end);
             emp[i].RRN=file1.tellp();
             file1.write((char*)&LE,sizeof(LE));
         }
@@ -315,12 +315,12 @@ void WriteSecondaeryIndexDep(fstream& stream,int r,SIndexDep d,char* ID){
             LD.next=-1;
             LD.back1=-1;
             dep[i].RRN=file1.tellp();
+            file1.seekp(0,ios::end);
             file1.write((char*)&LD,sizeof(LD));
         }
         stream.clear();
         stream.seekp(0,ios::beg);
         for(int j=0;j<i;j++){
-            cout<<1<<endl;
             stream.write((char*)&dep[j],sizeof(dep[j]));
         }
         file1.close();
@@ -440,8 +440,6 @@ public:
         strcpy(e.ID,Employee_ID);
         strcpy(e1.Dept_ID,Dept_ID);
         Write(stream);
-        stream.close();
-        stream.open("e.txt",ios::out|ios::in);
         int r=numofRecords(stream);
         WritePrimaryIndexEmp(file1,r,e);
         WriteSecondaeryIndexEmp(file2,r,e1,Employee_ID);
@@ -707,8 +705,6 @@ public:
         strcpy(d.ID,Dept_ID);
         strcpy(d1.Name,Dept_Name);
         Write(stream);
-        stream.close();
-        stream.open("d.txt",ios::out|ios::in);
         int r=numofRecords(stream);
         WritePrimaryIndexDep(file1,r,d);
         WriteSecondaeryIndexDep(file2,r,d1,Dept_ID);
@@ -988,7 +984,10 @@ int main()
             string Dep=x.substr(16,10);
             string DepID=x.substr(31,7);
             string DepID1=x.substr(29,7);
-            string EmpID=x.substr(41,11);
+            string EmpID;
+            if(41<x.size()){
+                EmpID=x.substr(41,11);
+            }
             string IDDep;
             string IDDep1;
             string IDEmp;
