@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <list>
 #include <iterator>
+#include <string>
+#include <bits/stdc++.h>
 
 using namespace std;
 
@@ -140,7 +142,7 @@ void WriteSecondaeryIndexEmp(fstream& stream,int r,SIndexEmp e,char* ID){
     stream.open("es.txt",ios::out|ios::in);
     fstream file1("el.txt",ios::out|ios::in);
     stream.seekg(0,ios::end);
-    SIndexEmp* emp=new SIndexEmp[r+1];
+    SIndexEmp* emp=new SIndexEmp[r+2];
     if(stream.tellg()==0){
         stream.clear();
         stream.seekp(0,ios::beg);
@@ -162,9 +164,9 @@ void WriteSecondaeryIndexEmp(fstream& stream,int r,SIndexEmp e,char* ID){
             stream.read((char*)&emp[i],sizeof(emp[i]));
             i++;
         }
-        bool state;
+        bool state=false;
         for(int j=0;j<i;j++){
-            if(strcmp(emp[j].Dept_ID,ID)==0){
+            if(strcmp(emp[j].Dept_ID,e.Dept_ID)==0){
                     file1.seekg(emp[j].RRN,ios::beg);
                     file1.read((char*)&le,sizeof(le));
                     if(strcmp(ID,le.ID)<0){
@@ -234,7 +236,7 @@ void WriteSecondaeryIndexDep(fstream& stream,int r,SIndexDep d,char* ID){
     stream.open("ds.txt",ios::out|ios::in);
     fstream file1("dl.txt",ios::out|ios::in);
     stream.seekg(0,ios::end);
-    SIndexDep* dep=new SIndexDep[r+1];
+    SIndexDep* dep=new SIndexDep[r+2];
     if(stream.tellg()==0){
         stream.clear();
         stream.seekp(0,ios::beg);
@@ -259,7 +261,7 @@ void WriteSecondaeryIndexDep(fstream& stream,int r,SIndexDep d,char* ID){
         }
         bool state;
         for(int j=0;j<i;j++){
-            if(strcmp(dep[j].Name,ID)==0){
+            if(strcmp(dep[j].Name,d.Name)==0){
                     file1.seekg(dep[j].RRN,ios::beg);
                     file1.read((char*)&ld,sizeof(ld));
                     if(strcmp(ID,ld.ID)<0){
@@ -387,6 +389,10 @@ public:
         cout<<"Position: "<<Employee_Position<<endl;
     }
 
+    void GetName(){
+        cout<<"Name: "<<Employee_Name<<endl;
+    }
+
     friend istream & operator >> (istream& Input,Employee &e){
         char id[13];
         char did[30];
@@ -419,7 +425,7 @@ public:
             RRN=stream.tellp();
         }
         else{
-            stream.seekg(sizeof(int)+RRN,ios::beg);
+            stream.seekg(RRN,ios::beg);
             char c;
             stream.get(c);
             if(c!='*'){
@@ -428,12 +434,14 @@ public:
             stream.read((char*)&nextDeleted,sizeof(int));
             stream.seekp(0,ios::beg);
             stream.write((char*)&nextDeleted,sizeof(int));
-            stream.seekp(sizeof(int)+RRN,ios::beg);
+            stream.seekp(RRN,ios::beg);
         }
         e.RRN=RRN;
         strcpy(e.ID,Employee_ID);
         strcpy(e1.Dept_ID,Dept_ID);
         Write(stream);
+        stream.close();
+        stream.open("e.txt",ios::out|ios::in);
         int r=numofRecords(stream);
         WritePrimaryIndexEmp(file1,r,e);
         WriteSecondaeryIndexEmp(file2,r,e1,Employee_ID);
@@ -510,9 +518,12 @@ public:
         fstream file("ep.txt",ios::in|ios::out);
         PIndexEmp* emp;
         int r=numofRecords(stream);
+        stream.close();
+        stream.open("e.txt",ios::out|ios::in);
         emp=ReadPIndE(file,r);
         int rrn=Binarysearch(emp,ID,0,r-1,r);
-        DeleteEmployee(rrn,stream);
+        if(DeleteEmployee(rrn,stream)){}
+        file.close();
     }
 
     int numofRecords(fstream& stream){
@@ -530,12 +541,27 @@ public:
     void searchByID(char* ID,fstream& stream){
         fstream file1("ep.txt",ios::out|ios::in);
         int r=numofRecords(stream);
+        stream.close();
+        stream.open("e.txt",ios::out|ios::in);
         PIndexEmp* emp;
         emp=ReadPIndE(file1,r);
         int rrn=GetRecordByID(emp,ID,r);
-        cout<<rrn<<endl;
         Employee e=GetEmployee(rrn,stream);
         e.Get();
+        file1.close();
+    }
+
+    void searchByIDName(char* ID,fstream& stream){
+        fstream file1("ep.txt",ios::out|ios::in);
+        int r=numofRecords(stream);
+        stream.close();
+        stream.open("e.txt",ios::out|ios::in);
+        PIndexEmp* emp;
+        emp=ReadPIndE(file1,r);
+        int rrn=GetRecordByID(emp,ID,r);
+        Employee e=GetEmployee(rrn,stream);
+        e.GetName();
+        file1.close();
     }
 
     int GetRecordByID(PIndexEmp* emp,char* ID,int r){
@@ -562,6 +588,8 @@ public:
         fstream file1("es.txt",ios::out|ios::in);
         fstream file2("el.txt",ios::out|ios::in);
         int r=numofRecords(stream);
+        stream.close();
+        stream.open("e.txt",ios::out|ios::in);
         SIndexEmp* emp;
         emp=ReadSIndE(file1,r);
         int rrn=GetRecordsByDeptID(emp,ID,r);
@@ -573,6 +601,8 @@ public:
             file2.seekg(l.next,ios::beg);
         }
         while(l.next!=-1);
+        file1.close();
+        file2.close();
     }
 
     int GetRecordsByDeptID(SIndexEmp* emp,char* ID,int r){
@@ -628,6 +658,7 @@ public:
         cout<<"Department Manager: "<<Dept_Manger<<endl;
     }
 
+
     void SetRRN(int rrn){
         RRN=rrn;
     }
@@ -661,7 +692,7 @@ public:
             RRN=stream.tellp();
         }
         else{
-            stream.seekg(sizeof(int)+RRN,ios::beg);
+            stream.seekg(RRN,ios::beg);
             char c;
             stream.get(c);
             if(c!='*'){
@@ -670,12 +701,14 @@ public:
             stream.read((char*)&nextDeleted,sizeof(int));
             stream.seekp(0,ios::beg);
             stream.write((char*)&nextDeleted,sizeof(int));
-            stream.seekp(sizeof(int)+RRN,ios::beg);
+            stream.seekp(RRN,ios::beg);
         }
         d.RRN=RRN;
         strcpy(d.ID,Dept_ID);
         strcpy(d1.Name,Dept_Name);
         Write(stream);
+        stream.close();
+        stream.open("d.txt",ios::out|ios::in);
         int r=numofRecords(stream);
         WritePrimaryIndexDep(file1,r,d);
         WriteSecondaeryIndexDep(file2,r,d1,Dept_ID);
@@ -749,9 +782,12 @@ public:
         fstream file("dp.txt",ios::in|ios::out);
         PIndexDep* dep;
         int r=numofRecords(stream);
+        stream.close();
+        stream.open("d.txt",ios::out|ios::in);
         dep=ReadPIndD(file,r);
         int rrn=Binarysearch(dep,ID,0,r-1,r);
-        DeleteDepartment(rrn,stream);
+        if(DeleteDepartment(rrn,stream));
+        file.close();
     }
 
     int numofRecords(fstream& stream){
@@ -769,12 +805,14 @@ public:
     void searchByID(char* ID,fstream& stream){
         fstream file1("dp.txt",ios::out|ios::in);
         int r=numofRecords(stream);
+        stream.close();
+        stream.open("d.txt",ios::out|ios::in);
         PIndexDep* dep;
         dep=ReadPIndD(file1,r);
         int rrn=GetRecordByID(dep,ID,r);
-        cout<<rrn<<endl;
         Department d=GetDepartment(rrn,stream);
         d.Get();
+        file1.close();
     }
 
     int GetRecordByID(PIndexDep* dep,char* ID,int r){
@@ -802,6 +840,8 @@ public:
         fstream file1("ds.txt",ios::out|ios::in);
         fstream file2("dl.txt",ios::out|ios::in);
         int r=numofRecords(stream);
+        stream.close();
+        stream.open("d.txt",ios::out|ios::in);
         SIndexDep* dep;
         dep=ReadSIndD(file1,r);
         int rrn=GetRecordsByName(dep,ID,r);
@@ -813,6 +853,8 @@ public:
             file2.seekg(d.next,ios::beg);
         }
         while(d.next!=-1);
+        file1.close();
+        file2.close();
     }
 
     int GetRecordsByName(SIndexDep* dep,char* Name,int r){
@@ -850,14 +892,15 @@ int main()
             cout<<"6 print Emplyee(dept_ID)"<<endl;
             cout<<"7 print Department(ID)"<<endl;
             cout<<"8 print Department(Name)"<<endl;
-            cout<<"9 Exit"<<endl;
+            cout<<"9 Write Query"<<endl;
+            cout<<"10 Exit"<<endl;
             cin>>x;
     switch(x){
         case 1:{
                 fstream file("e.txt",ios::in|ios::out);
                 Employee e;
                 cin>>e;
-                file.seekp(0,ios::beg);
+                file.seekp(0,ios::end);
                 if(file.tellp()==0){
                     int header=-1;
                     file.write((char*)& header,sizeof(int));
@@ -882,7 +925,7 @@ int main()
         case 3:{
                 fstream file("e.txt",ios::in|ios::out);
                 Employee e;
-                char* c;
+                char c[13];
                 cin>>c;
                 e.DeleteEmployeeByID(c,file);
                 file.close();
@@ -891,7 +934,7 @@ int main()
         case 4:{
                 fstream file("d.txt",ios::in|ios::out);
                 Department d;
-                char* c;
+                char c[30];
                 cin>>c;
                 d.DeleteDepartmentByID(c,file);
                 file.close();
@@ -909,7 +952,7 @@ int main()
         case 6:{
                 fstream file("e.txt",ios::in|ios::out);
                 Employee e;
-                char c[30];
+                char c[13];
                 cin>>c;
                 e.searchByDeptId(c,file);
                 file.close();
@@ -934,6 +977,78 @@ int main()
                 break;
         }
         case 9:{
+            string x;
+            cin.ignore();
+            getline(cin,x);
+            string select=x.substr(0,6);
+            string all=x.substr(7,3);
+            string EmpName=x.substr(7,13);
+            string Emp=x.substr(16,8);
+            string Emp1=x.substr(26,8);
+            string Dep=x.substr(16,10);
+            string DepID=x.substr(31,7);
+            string DepID1=x.substr(29,7);
+            string EmpID=x.substr(41,11);
+            string IDDep;
+            string IDDep1;
+            string IDEmp;
+            if(39<x.size()){
+                IDDep=x.substr(39);
+            }
+            if(41<x.size()){
+                IDDep1=x.substr(41);
+            }
+            if(53<x.size()){
+                IDEmp=x.substr(53);
+            }
+            transform(select.begin(), select.end(), select.begin(), ::tolower);
+            if(select.compare("select")==0){
+                transform(all.begin(), all.end(), all.begin(), ::tolower);
+                transform(EmpName.begin(), EmpName.end(), EmpName.begin(), ::tolower);
+                if(all.compare("all")==0){
+                    transform(Emp.begin(), Emp.end(), Emp.begin(), ::tolower);
+                    transform(Dep.begin(), Dep.end(), Dep.begin(), ::tolower);
+                    if(Emp.compare("employee")==0){
+                        transform(DepID.begin(), DepID.end(), DepID.begin(), ::tolower);
+                        if(DepID.compare("dept_id")==0){
+                            fstream file("e.txt",ios::in|ios::out);
+                            Employee e;
+                            char id[30];
+                            strcpy(id,IDDep.c_str());
+                            e.searchByDeptId(id,file);
+                            file.close();
+                        }
+                    }
+                    else if(Dep.compare("department")==0){
+                        transform(DepID1.begin(), DepID1.end(), DepID1.begin(), ::tolower);
+                        if(DepID1.compare("dept_id")){
+                            fstream file("d.txt",ios::in|ios::out);
+                            Department d;
+                            char id[30];
+                            strcpy(id,IDDep1.c_str());
+                            d.searchByID(id,file);
+                            file.close();
+                        }
+                    }
+                }
+                else if(EmpName.compare("employee_name")==0){
+                    transform(Emp1.begin(), Emp1.end(), Emp1.begin(), ::tolower);
+                    if(Emp1.compare("employee")==0){
+                                transform(EmpID.begin(), EmpID.end(), EmpID.begin(), ::tolower);
+                                if(EmpID.compare("employee_id")==0){
+                                    fstream file("e.txt",ios::in|ios::out);
+                                    Employee e;
+                                    char c[13];
+                                    strcpy(c,IDEmp.c_str());
+                                    e.searchByIDName(c,file);
+                                    file.close();
+                                }
+                    }
+                }
+            }
+            break;
+        }
+        case 10:{
             state=false;
             break;
         }
